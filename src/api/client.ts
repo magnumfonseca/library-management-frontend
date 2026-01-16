@@ -2,6 +2,12 @@ import axios from 'axios'
 
 export const TOKEN_KEY = 'authToken'
 
+let onUnauthorizedCallback: (() => void) | null = null
+
+export function setOnUnauthorized(callback: () => void) {
+  onUnauthorizedCallback = callback
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: { 'Content-Type': 'application/json' },
@@ -30,7 +36,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY)
-      window.location.href = '/login'
+      onUnauthorizedCallback?.()
     }
     return Promise.reject(error)
   }
