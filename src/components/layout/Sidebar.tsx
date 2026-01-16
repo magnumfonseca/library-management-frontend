@@ -11,6 +11,7 @@ const memberNavigation = [
 ]
 
 const librarianNavigation = [
+  { name: 'Borrowings', href: '/borrowings', icon: ClipboardIcon },
   { name: 'Invitations', href: '/invitations', icon: EnvelopeIcon },
 ]
 

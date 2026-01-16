@@ -61,7 +61,7 @@ export function BorrowingCard({ borrowing, onReturn, isReturning }: BorrowingCar
         )}
       </div>
 
-      {isActive && onReturn && (
+      {(isActive || isOverdue) && onReturn && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           <button
             onClick={onReturn}
