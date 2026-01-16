@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getBooks, createBook, updateBook, deleteBook } from '@/api/books'
@@ -11,20 +11,23 @@ import type { Book, BookFilters as BookFiltersType, UpdateBookInput } from '@/ty
 
 export function BookList() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const actionParam = searchParams.get('action')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [deletingBook, setDeletingBook] = useState<Book | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
-  // Open create modal if action=add is in URL
-  useEffect(() => {
-    if (searchParams.get('action') === 'add') {
-      setIsCreateModalOpen(true)
+  // Derive modal open state from URL or local state
+  const showCreateModal = isCreateModalOpen || actionParam === 'add'
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false)
+    if (actionParam === 'add') {
       const params = new URLSearchParams(searchParams)
       params.delete('action')
       setSearchParams(params, { replace: true })
     }
-  }, [searchParams, setSearchParams])
+  }
 
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
@@ -47,7 +50,7 @@ export function BookList() {
     mutationFn: createBook,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] })
-      setIsCreateModalOpen(false)
+      closeCreateModal()
       setToast({ message: 'Book created successfully', type: 'success' })
     },
     onError: () => {
@@ -181,13 +184,13 @@ export function BookList() {
       )}
 
       <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        isOpen={showCreateModal}
+        onClose={closeCreateModal}
         title="Add New Book"
       >
         <BookForm
           onSubmit={(data) => createMutation.mutate(data)}
-          onCancel={() => setIsCreateModalOpen(false)}
+          onCancel={closeCreateModal}
           isSubmitting={createMutation.isPending}
         />
       </Modal>

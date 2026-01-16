@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 interface ToastProps {
   message: string
@@ -9,7 +9,10 @@ interface ToastProps {
 
 export function Toast({ message, type = 'success', onClose, duration = 3000 }: ToastProps) {
   const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     const timer = setTimeout(() => onCloseRef.current(), duration)

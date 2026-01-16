@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 interface ModalProps {
   isOpen: boolean
@@ -10,7 +10,10 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     const dialog = dialogRef.current
