@@ -112,17 +112,142 @@ export const handlers = [
     })
   }),
 
-  http.get(`${API_URL}/api/dashboard`, () => {
+  // Dashboard endpoints
+  http.get(`${API_URL}/api/v1/dashboard`, ({ request }) => {
+    const userRole = request.headers.get('X-User-Role') || 'member'
+    
+    if (userRole === 'librarian') {
+      return HttpResponse.json({
+        data: {
+          total_books: 100,
+          total_borrowed_books: 25,
+          books_due_today: 5,
+          members_with_overdue: [
+            { id: 1, name: 'John Doe', email: 'john@example.com', overdue_count: 2 },
+            { id: 2, name: 'Jane Smith', email: 'jane@example.com', overdue_count: 1 }
+          ],
+          pagination: {
+            current_page: 1,
+            total_pages: 1,
+            total_count: 2,
+            per_page: 10
+          }
+        }
+      })
+    }
+    
     return HttpResponse.json({
       data: {
-        type: 'dashboard',
-        attributes: {
-          total_books: 100,
-          total_borrowings: 50,
-          active_borrowings: 10,
-          overdue_borrowings: 2
+        borrowed_books: [
+          {
+            id: 1,
+            book: { id: 1, title: 'The Great Gatsby', author: 'F. Scott Fitzgerald' },
+            borrowed_at: '2024-01-01T00:00:00Z',
+            due_date: '2024-01-20T00:00:00Z',
+            days_until_due: 5,
+            is_overdue: false,
+            days_overdue: 0
+          }
+        ],
+        overdue_books: [],
+        summary: { total_borrowed: 1, total_overdue: 0 },
+        pagination: {
+          current_page: 1,
+          total_pages: 1,
+          total_count: 1,
+          per_page: 20
         }
       }
     })
+  }),
+
+  // Invitation endpoints
+  http.get(`${API_URL}/api/v1/invitations`, () => {
+    return HttpResponse.json({
+      data: [
+        {
+          id: '1',
+          type: 'invitations',
+          attributes: {
+            email: 'librarian@example.com',
+            role: 'librarian',
+            expires_at: '2024-02-01T00:00:00Z',
+            accepted_at: null,
+            status: 'pending',
+            created_at: '2024-01-01T00:00:00Z'
+          }
+        },
+        {
+          id: '2',
+          type: 'invitations',
+          attributes: {
+            email: 'accepted@example.com',
+            role: 'librarian',
+            expires_at: '2024-02-01T00:00:00Z',
+            accepted_at: '2024-01-05T00:00:00Z',
+            status: 'accepted',
+            created_at: '2024-01-01T00:00:00Z'
+          }
+        }
+      ],
+      meta: {
+        page: { total: 2, totalPages: 1, number: 1, size: 25 }
+      }
+    })
+  }),
+
+  http.post(`${API_URL}/api/v1/invitations`, async ({ request }) => {
+    const body = await request.json() as { invitation: { email: string } }
+    return HttpResponse.json({
+      data: {
+        id: '3',
+        type: 'invitations',
+        attributes: {
+          email: body.invitation.email,
+          role: 'librarian',
+          expires_at: '2024-02-01T00:00:00Z',
+          accepted_at: null,
+          status: 'pending',
+          created_at: '2024-01-15T00:00:00Z'
+        }
+      }
+    }, { status: 201 })
+  }),
+
+  http.delete(`${API_URL}/api/v1/invitations/:id`, () => {
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.get(`${API_URL}/api/v1/invitations/token/:token`, ({ params }) => {
+    if (params.token === 'valid-token') {
+      return HttpResponse.json({
+        data: {
+          id: '1',
+          type: 'invitations',
+          attributes: {
+            email: 'librarian@example.com',
+            role: 'librarian',
+            expires_at: '2024-02-01T00:00:00Z',
+            accepted_at: null,
+            status: 'pending',
+            created_at: '2024-01-01T00:00:00Z'
+          }
+        }
+      })
+    }
+    return HttpResponse.json(
+      { errors: [{ status: '404', detail: 'Invitation not found' }] },
+      { status: 404 }
+    )
+  }),
+
+  http.patch(`${API_URL}/api/v1/invitations/token/:token/accept`, async ({ params }) => {
+    if (params.token === 'valid-token') {
+      return new HttpResponse(null, { status: 201 })
+    }
+    return HttpResponse.json(
+      { errors: [{ status: '404', detail: 'Invitation not found' }] },
+      { status: 404 }
+    )
   }),
 ]

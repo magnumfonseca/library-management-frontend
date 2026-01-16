@@ -1,9 +1,49 @@
-import { useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { getDashboard } from '@/api/dashboard'
 import { useAuthStore } from '@/store/authStore'
+import { LibrarianDashboard } from './LibrarianDashboard'
+import { MemberDashboard } from './MemberDashboard'
+import type { LibrarianDashboardData, MemberDashboardData, DashboardFilters } from '@/types'
 
 export function Dashboard() {
   const user = useAuthStore((state) => state.user)
-  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isLibrarian = user?.role === 'librarian'
+
+  const filters: DashboardFilters = {
+    page: Number(searchParams.get('page')) || 1,
+    per_page: isLibrarian ? 10 : 20,
+  }
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['dashboard', filters],
+    queryFn: () => getDashboard(filters),
+  })
+
+  if (isLoading) {
+    return <DashboardSkeleton isLibrarian={isLibrarian} />
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500">Welcome back, {user?.name}!</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600 mb-4">Failed to load dashboard data. Please try again.</p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -12,120 +52,52 @@ export function Dashboard() {
         <p className="text-gray-500">Welcome back, {user?.name}!</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Books"
-          value="--"
-          icon={<BookIcon />}
-          color="blue"
-        />
-        <StatCard
-          title="Available"
-          value="--"
-          icon={<CheckIcon />}
-          color="green"
-        />
-        <StatCard
-          title="Borrowed"
-          value="--"
-          icon={<ClockIcon />}
-          color="yellow"
-        />
-        <StatCard
-          title="Overdue"
-          value="--"
-          icon={<AlertIcon />}
-          color="red"
-        />
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => navigate('/books')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Browse Books
-          </button>
-          <button
-            onClick={() => navigate('/borrowings')}
-            className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            View Borrowings
-          </button>
-          {user?.role === 'librarian' && (
-            <button
-              onClick={() => navigate('/books?action=add')}
-              className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Add New Book
-            </button>
-          )}
-        </div>
-      </div>
+      {isLibrarian ? (
+        <LibrarianDashboard data={data as LibrarianDashboardData} />
+      ) : (
+        <MemberDashboard data={data as MemberDashboardData} />
+      )}
     </div>
   )
 }
 
-interface StatCardProps {
-  title: string
-  value: string
-  icon: React.ReactNode
-  color: 'blue' | 'green' | 'yellow' | 'red'
+interface DashboardSkeletonProps {
+  isLibrarian: boolean
 }
 
-function StatCard({ title, value, icon, color }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    red: 'bg-red-50 text-red-600',
-  }
-
+function DashboardSkeleton({ isLibrarian }: DashboardSkeletonProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-          {icon}
+    <div className="space-y-6">
+      <div>
+        <div className="h-8 w-40 bg-gray-200 rounded animate-pulse" />
+        <div className="h-5 w-48 bg-gray-200 rounded animate-pulse mt-2" />
+      </div>
+
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isLibrarian ? 'lg:grid-cols-3' : ''} gap-4`}>
+        {Array.from({ length: isLibrarian ? 3 : 2 }).map((_, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mt-2" />
         </div>
-        <div>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          <p className="text-sm text-gray-500">{title}</p>
+        <div className="p-6 space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
+          ))}
         </div>
       </div>
     </div>
-  )
-}
-
-function BookIcon() {
-  return (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-    </svg>
-  )
-}
-
-function ClockIcon() {
-  return (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  )
-}
-
-function AlertIcon() {
-  return (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
   )
 }
