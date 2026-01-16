@@ -21,6 +21,8 @@ export function BookFilters({ filters, onFilterChange }: BookFiltersProps) {
     },
   })
 
+  const filterKey = `${filters.title || ''}-${filters.author || ''}-${filters.genre || ''}`
+
   const onSubmit = (data: FilterForm) => {
     onFilterChange({
       title: data.title || undefined,
@@ -37,7 +39,7 @@ export function BookFilters({ filters, onFilterChange }: BookFiltersProps) {
   const hasActiveFilters = filters.title || filters.author || filters.genre
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <form key={filterKey} onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
