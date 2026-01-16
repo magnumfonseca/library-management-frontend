@@ -8,17 +8,13 @@ import { BookCard } from './BookCard'
 import { BookFilters } from './BookFilters'
 import { BookForm } from './BookForm'
 import { Modal, Pagination, Toast } from '@/components/ui'
-import type { Book, BookFilters as BookFiltersType, UpdateBookInput } from '@/types'
+import type { Book, BookFilters as BookFiltersType, UpdateBookInput, ApiErrorResponse } from '@/types'
 import { AxiosError } from 'axios'
-
-interface ApiErrorResponse {
-  errors?: { detail?: string }[]
-}
 
 function getErrorMessage(error: unknown): string | null {
   if (error instanceof AxiosError && error.response?.data) {
     const data = error.response.data as ApiErrorResponse
-    return data.errors?.[0]?.detail || null
+    return data.errors[0]?.detail || null
   }
   return null
 }

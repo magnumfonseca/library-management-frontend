@@ -17,6 +17,19 @@ export function BookCard({ book, onBorrow, onEdit, onDelete, isBorrowing }: Book
   const alreadyBorrowed = book.borrowed_by_current_user
   const canBorrow = isMember && isAvailable && onBorrow && !alreadyBorrowed
 
+  const getBorrowButtonLabel = () => {
+    if (alreadyBorrowed) return `You already borrowed ${book.title}`
+    if (!isAvailable) return `${book.title} is not available`
+    return `Borrow ${book.title}`
+  }
+
+  const getBorrowButtonText = () => {
+    if (isBorrowing) return 'Borrowing...'
+    if (alreadyBorrowed) return 'Already Borrowed'
+    if (!isAvailable) return 'Not Available'
+    return 'Borrow Book'
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
@@ -58,10 +71,10 @@ export function BookCard({ book, onBorrow, onEdit, onDelete, isBorrowing }: Book
             <button
               onClick={onBorrow}
               disabled={!canBorrow || isBorrowing}
-              aria-label={alreadyBorrowed ? `You already borrowed ${book.title}` : isAvailable ? `Borrow ${book.title}` : `${book.title} is not available`}
+              aria-label={getBorrowButtonLabel()}
               className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {isBorrowing ? 'Borrowing...' : alreadyBorrowed ? 'Already Borrowed' : isAvailable ? 'Borrow Book' : 'Not Available'}
+              {getBorrowButtonText()}
             </button>
           )}
           {showActions && (
