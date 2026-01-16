@@ -15,3 +15,19 @@ export interface BookFilters {
   page?: number
   per_page?: number
 }
+
+export interface CreateBookInput {
+  title: string
+  author: string
+  genre: string
+  isbn: string
+  total_copies: number
+}
+
+export interface UpdateBookInput {
+  title?: string
+  author?: string
+  genre?: string
+  isbn?: string
+  total_copies?: number
+}
