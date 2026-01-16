@@ -67,3 +67,12 @@ export interface DashboardFilters {
   page?: number
   per_page?: number
 }
+
+// Type guards
+export function isLibrarianDashboardData(data: DashboardData): data is LibrarianDashboardData {
+  return 'members_with_overdue' in data && 'total_books' in data && 'books_due_today' in data
+}
+
+export function isMemberDashboardData(data: DashboardData): data is MemberDashboardData {
+  return 'borrowed_books' in data && 'summary' in data && 'total_books' in data === false
+}

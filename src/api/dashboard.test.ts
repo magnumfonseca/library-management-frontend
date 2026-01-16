@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest'
 import { server } from '@/test/mocks/server'
 import { getDashboard } from './dashboard'
+import { TOKEN_KEY } from './client'
 
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  server.resetHandlers()
+  localStorage.clear()
+})
 afterAll(() => server.close())
 
 describe('Dashboard API', () => {
@@ -35,12 +39,24 @@ describe('Dashboard API', () => {
   })
 
   describe('getDashboard - Librarian', () => {
-    it('should fetch librarian dashboard data with custom header', async () => {
-      // Note: In real tests, you'd mock the auth header or use server.use() to override
+    it('should fetch librarian dashboard data', async () => {
+      // Set librarian token in localStorage to simulate librarian auth
+      localStorage.setItem(TOKEN_KEY, 'mock-jwt-token-librarian')
+      
       const result = await getDashboard()
       
-      // Default mock returns member data, but in integration this would test librarian data
-      expect(result).toBeDefined()
+      expect(result).toHaveProperty('total_books')
+      expect(result).toHaveProperty('total_borrowed_books')
+      expect(result).toHaveProperty('books_due_today')
+      expect(result).toHaveProperty('members_with_overdue')
+      
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data = result as any
+      expect(data.total_books).toBe(100)
+      expect(data.total_borrowed_books).toBe(25)
+      expect(data.books_due_today).toBe(5)
+      expect(Array.isArray(data.members_with_overdue)).toBe(true)
+      expect(data.members_with_overdue).toHaveLength(2)
     })
   })
 })

@@ -25,8 +25,7 @@ function renderWithProviders() {
           <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
         </Routes>
       </BrowserRouter>
-    </QueryClientProvider>,
-    { wrapper: ({ children }) => children }
+    </QueryClientProvider>
   )
 }
 

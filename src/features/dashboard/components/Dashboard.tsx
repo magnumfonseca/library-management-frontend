@@ -4,7 +4,8 @@ import { getDashboard } from '@/api/dashboard'
 import { useAuthStore } from '@/store/authStore'
 import { LibrarianDashboard } from './LibrarianDashboard'
 import { MemberDashboard } from './MemberDashboard'
-import type { LibrarianDashboardData, MemberDashboardData, DashboardFilters } from '@/types'
+import { isLibrarianDashboardData, isMemberDashboardData } from '@/types'
+import type { DashboardFilters } from '@/types'
 
 export function Dashboard() {
   const user = useAuthStore((state) => state.user)
@@ -45,6 +46,52 @@ export function Dashboard() {
     )
   }
 
+  // Guard against undefined data
+  if (!data) {
+    return <DashboardSkeleton isLibrarian={isLibrarian} />
+  }
+
+  // Validate dashboard data type matches expected role
+  if (isLibrarian && !isLibrarianDashboardData(data)) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500">Welcome back, {user?.name}!</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600 mb-4">Unexpected dashboard data format. Please contact support.</p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isLibrarian && !isMemberDashboardData(data)) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500">Welcome back, {user?.name}!</p>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-600 mb-4">Unexpected dashboard data format. Please contact support.</p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -52,10 +99,10 @@ export function Dashboard() {
         <p className="text-gray-500">Welcome back, {user?.name}!</p>
       </div>
 
-      {isLibrarian ? (
-        <LibrarianDashboard data={data as LibrarianDashboardData} />
+      {isLibrarianDashboardData(data) ? (
+        <LibrarianDashboard data={data} />
       ) : (
-        <MemberDashboard data={data as MemberDashboardData} />
+        <MemberDashboard data={data} />
       )}
     </div>
   )

@@ -2,6 +2,22 @@ import { http, HttpResponse } from 'msw'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
+// Helper to decode mock JWT token and extract user role
+function getUserRoleFromToken(authHeader: string | null): 'librarian' | 'member' {
+  if (!authHeader) return 'member'
+  
+  // Extract token from "Bearer <token>" format
+  const token = authHeader.replace(/^Bearer\s+/i, '')
+  
+  // Mock JWT tokens format: "mock-jwt-token-{role}"
+  // e.g., "mock-jwt-token-librarian" or "mock-jwt-token-member"
+  if (token.includes('librarian')) {
+    return 'librarian'
+  }
+  
+  return 'member'
+}
+
 export const handlers = [
   http.post(`${API_URL}/api/v1/login`, async ({ request }) => {
     const body = await request.json() as { user: { email: string; password: string } }
@@ -14,7 +30,19 @@ export const handlers = [
             attributes: { email: 'test@example.com', name: 'Test User', role: 'member' }
           }
         },
-        { headers: { Authorization: 'Bearer mock-jwt-token' } }
+        { headers: { Authorization: 'Bearer mock-jwt-token-member' } }
+      )
+    }
+    if (body.user.email === 'librarian@example.com' && body.user.password === 'password123') {
+      return HttpResponse.json(
+        {
+          data: {
+            id: '2',
+            type: 'users',
+            attributes: { email: 'librarian@example.com', name: 'Test Librarian', role: 'librarian' }
+          }
+        },
+        { headers: { Authorization: 'Bearer mock-jwt-token-librarian' } }
       )
     }
     return HttpResponse.json(
@@ -114,7 +142,8 @@ export const handlers = [
 
   // Dashboard endpoints
   http.get(`${API_URL}/api/v1/dashboard`, ({ request }) => {
-    const userRole = request.headers.get('X-User-Role') || 'member'
+    const authHeader = request.headers.get('Authorization')
+    const userRole = getUserRoleFromToken(authHeader)
     
     if (userRole === 'librarian') {
       return HttpResponse.json({
