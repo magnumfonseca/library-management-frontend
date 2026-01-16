@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 import { BookCard } from './BookCard'
 import { BookFilters } from './BookFilters'
 import { BookForm } from './BookForm'
-import { Modal, Pagination } from '@/components/ui'
+import { Modal, Pagination, Toast } from '@/components/ui'
 import type { Book, BookFilters as BookFiltersType, CreateBookInput } from '@/types'
 
 export function BookList() {
@@ -14,6 +14,7 @@ export function BookList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [deletingBook, setDeletingBook] = useState<Book | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   // Open create modal if action=add is in URL
   useEffect(() => {
@@ -47,6 +48,10 @@ export function BookList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] })
       setIsCreateModalOpen(false)
+      setToast({ message: 'Book created successfully', type: 'success' })
+    },
+    onError: () => {
+      setToast({ message: 'Failed to create book', type: 'error' })
     },
   })
 
@@ -55,6 +60,10 @@ export function BookList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] })
       setEditingBook(null)
+      setToast({ message: 'Book updated successfully', type: 'success' })
+    },
+    onError: () => {
+      setToast({ message: 'Failed to update book', type: 'error' })
     },
   })
 
@@ -63,6 +72,10 @@ export function BookList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] })
       setDeletingBook(null)
+      setToast({ message: 'Book deleted successfully', type: 'success' })
+    },
+    onError: () => {
+      setToast({ message: 'Failed to delete book', type: 'error' })
     },
   })
 
@@ -223,6 +236,14 @@ export function BookList() {
           </div>
         )}
       </Modal>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }
