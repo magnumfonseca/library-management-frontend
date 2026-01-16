@@ -3,12 +3,15 @@ import { useAuthStore } from '@/store/authStore'
 
 interface BookCardProps {
   book: Book
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
-export function BookCard({ book }: BookCardProps) {
+export function BookCard({ book, onEdit, onDelete }: BookCardProps) {
   const user = useAuthStore((state) => state.user)
   const isAvailable = book.available_copies > 0
   const isMember = user?.role === 'member'
+  const showActions = onEdit || onDelete
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -45,15 +48,39 @@ export function BookCard({ book }: BookCardProps) {
         </div>
       </div>
 
-      {isMember && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <button
-            disabled={!isAvailable}
-            aria-label={isAvailable ? `Borrow ${book.title}` : `${book.title} is not available`}
-            className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {isAvailable ? 'Borrow Book' : 'Not Available'}
-          </button>
+      {(isMember || showActions) && (
+        <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+          {isMember && (
+            <button
+              disabled={!isAvailable}
+              aria-label={isAvailable ? `Borrow ${book.title}` : `${book.title} is not available`}
+              className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              {isAvailable ? 'Borrow Book' : 'Not Available'}
+            </button>
+          )}
+          {showActions && (
+            <div className="flex gap-2">
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  aria-label={`Edit ${book.title}`}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Edit
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={onDelete}
+                  aria-label={`Delete ${book.title}`}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

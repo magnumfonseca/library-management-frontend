@@ -1,13 +1,37 @@
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { getBooks } from '@/api/books'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getBooks, createBook, updateBook, deleteBook } from '@/api/books'
+import { useAuthStore } from '@/store/authStore'
 import { BookCard } from './BookCard'
 import { BookFilters } from './BookFilters'
-import { Pagination } from '@/components/ui'
-import type { BookFilters as BookFiltersType } from '@/types'
+import { BookForm } from './BookForm'
+import { Modal, Pagination, Toast } from '@/components/ui'
+import type { Book, BookFilters as BookFiltersType, UpdateBookInput } from '@/types'
 
 export function BookList() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const actionParam = searchParams.get('action')
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingBook, setEditingBook] = useState<Book | null>(null)
+  const [deletingBook, setDeletingBook] = useState<Book | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  // Derive modal open state from URL or local state
+  const showCreateModal = isCreateModalOpen || actionParam === 'add'
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false)
+    if (actionParam === 'add') {
+      const params = new URLSearchParams(searchParams)
+      params.delete('action')
+      setSearchParams(params, { replace: true })
+    }
+  }
+
+  const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
+  const isLibrarian = user?.role === 'librarian'
 
   const filters: BookFiltersType = {
     title: searchParams.get('title') || undefined,
@@ -20,6 +44,42 @@ export function BookList() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['books', filters],
     queryFn: () => getBooks(filters),
+  })
+
+  const createMutation = useMutation({
+    mutationFn: createBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] })
+      closeCreateModal()
+      setToast({ message: 'Book created successfully', type: 'success' })
+    },
+    onError: () => {
+      setToast({ message: 'Failed to create book', type: 'error' })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateBookInput }) => updateBook(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] })
+      setEditingBook(null)
+      setToast({ message: 'Book updated successfully', type: 'success' })
+    },
+    onError: () => {
+      setToast({ message: 'Failed to update book', type: 'error' })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] })
+      setDeletingBook(null)
+      setToast({ message: 'Book deleted successfully', type: 'success' })
+    },
+    onError: () => {
+      setToast({ message: 'Failed to delete book', type: 'error' })
+    },
   })
 
   const handleFilterChange = (newFilters: BookFiltersType) => {
@@ -74,6 +134,14 @@ export function BookList() {
             {meta?.total_count || 0} books {hasActiveFilters ? 'found' : 'in the library'}
           </p>
         </div>
+        {isLibrarian && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Add Book
+          </button>
+        )}
       </div>
 
       <BookFilters filters={filters} onFilterChange={handleFilterChange} />
@@ -96,7 +164,12 @@ export function BookList() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {books.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <BookCard
+                key={book.id}
+                book={book}
+                onEdit={isLibrarian ? () => setEditingBook(book) : undefined}
+                onDelete={isLibrarian ? () => setDeletingBook(book) : undefined}
+              />
             ))}
           </div>
 
@@ -108,6 +181,71 @@ export function BookList() {
             />
           )}
         </>
+      )}
+
+      <Modal
+        isOpen={showCreateModal}
+        onClose={closeCreateModal}
+        title="Add New Book"
+      >
+        <BookForm
+          onSubmit={(data) => createMutation.mutate(data)}
+          onCancel={closeCreateModal}
+          isSubmitting={createMutation.isPending}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={!!editingBook}
+        onClose={() => setEditingBook(null)}
+        title="Edit Book"
+      >
+        {editingBook && (
+          <BookForm
+            book={editingBook}
+            onSubmit={(data) => updateMutation.mutate({ id: editingBook.id, data })}
+            onCancel={() => setEditingBook(null)}
+            isSubmitting={updateMutation.isPending}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={!!deletingBook}
+        onClose={() => setDeletingBook(null)}
+        title="Delete Book"
+      >
+        {deletingBook && (
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Are you sure you want to delete <span className="font-medium">{deletingBook.title}</span>? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => deleteMutation.mutate(deletingBook.id)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-400 transition-colors"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+              <button
+                onClick={() => setDeletingBook(null)}
+                disabled={deleteMutation.isPending}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   )

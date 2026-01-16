@@ -1,5 +1,5 @@
 import api from './client'
-import type { Book, BookFilters, JsonApiResponse, PaginationMeta, ApiPaginationMeta } from '@/types'
+import type { Book, BookFilters, CreateBookInput, UpdateBookInput, JsonApiResponse, PaginationMeta, ApiPaginationMeta } from '@/types'
 
 type BookAttributes = Omit<Book, 'id'>
 
@@ -45,4 +45,32 @@ export async function getBook(id: string): Promise<Book> {
   }
 
   return { id: response.data.data.id, ...response.data.data.attributes }
+}
+
+export async function createBook(input: CreateBookInput): Promise<Book> {
+  const response = await api.post<JsonApiResponse<BookAttributes>>('/api/v1/books', {
+    book: input,
+  })
+
+  if (Array.isArray(response.data.data)) {
+    throw new Error('Unexpected array response')
+  }
+
+  return { id: response.data.data.id, ...response.data.data.attributes }
+}
+
+export async function updateBook(id: string, input: UpdateBookInput): Promise<Book> {
+  const response = await api.patch<JsonApiResponse<BookAttributes>>(`/api/v1/books/${id}`, {
+    book: input,
+  })
+
+  if (Array.isArray(response.data.data)) {
+    throw new Error('Unexpected array response')
+  }
+
+  return { id: response.data.data.id, ...response.data.data.attributes }
+}
+
+export async function deleteBook(id: string): Promise<void> {
+  await api.delete(`/api/v1/books/${id}`)
 }
