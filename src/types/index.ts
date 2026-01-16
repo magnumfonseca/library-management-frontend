@@ -1,4 +1,5 @@
 export * from './user'
 export * from './book'
 export * from './borrowing'
+export * from './invitation'
 export * from './api'
