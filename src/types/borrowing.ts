@@ -2,11 +2,12 @@ export interface Borrowing {
   id: string
   book_id: string
   user_id: string
+  book_title: string
   borrowed_at: string
   due_date: string
   returned_at: string | null
-  book_title: string
-  book_author: string
+  status: 'active' | 'returned' | 'overdue'
+  days_overdue: number
 }
 
 export interface BorrowingFilters {
