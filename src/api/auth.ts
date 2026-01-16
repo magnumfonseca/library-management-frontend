@@ -1,4 +1,4 @@
-import api, { TOKEN_KEY } from './client'
+import api from './client'
 import type { User, LoginCredentials, SignupCredentials, JsonApiResponse } from '@/types'
 
 type UserAttributes = Omit<User, 'id'>
@@ -27,5 +27,5 @@ export async function signup(credentials: SignupCredentials): Promise<User> {
 
 export async function logout(): Promise<void> {
   await api.delete('/api/v1/logout')
-  localStorage.removeItem(TOKEN_KEY)
+  // Token cleanup is handled by authStore.logout()
 }

@@ -35,7 +35,7 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem(TOKEN_KEY)
+      // Token cleanup is handled by onUnauthorizedCallback -> authStore.logout()
       onUnauthorizedCallback?.()
     }
     return Promise.reject(error)
