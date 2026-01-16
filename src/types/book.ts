@@ -6,6 +6,7 @@ export interface Book {
   isbn: string
   total_copies: number
   available_copies: number
+  borrowed_by_current_user: boolean
 }
 
 export interface BookFilters {
