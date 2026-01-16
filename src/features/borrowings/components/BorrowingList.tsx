@@ -1,12 +1,19 @@
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { getBorrowings } from '@/api/borrowings'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getBorrowings, returnBook } from '@/api/borrowings'
+import { useAuthStore } from '@/store/authStore'
 import { BorrowingCard } from './BorrowingCard'
-import { Pagination } from '@/components/ui'
+import { Pagination, Toast } from '@/components/ui'
 import type { BorrowingFilters } from '@/types'
 
 export function BorrowingList() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [returningBorrowingId, setReturningBorrowingId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
+  const isLibrarian = user?.role === 'librarian'
 
   const filters: BorrowingFilters = {
     status: (searchParams.get('status') as BorrowingFilters['status']) || undefined,
@@ -35,6 +42,25 @@ export function BorrowingList() {
     setSearchParams(params)
   }
 
+  const returnMutation = useMutation({
+    mutationFn: returnBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['borrowings'] })
+      setReturningBorrowingId(null)
+      setToast({ message: 'Book returned successfully', type: 'success' })
+    },
+    onError: () => {
+      setReturningBorrowingId(null)
+      setToast({ message: 'Failed to return book', type: 'error' })
+    },
+  })
+
+  const handleReturn = (borrowingId: string) => {
+    if (returnMutation.isPending) return
+    setReturningBorrowingId(borrowingId)
+    returnMutation.mutate(borrowingId)
+  }
+
   if (isLoading) {
     return <BorrowingListSkeleton />
   }
@@ -61,7 +87,9 @@ export function BorrowingList() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Borrowings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {isLibrarian ? 'Borrowings' : 'My Borrowings'}
+        </h1>
         <p className="text-gray-500">
           {meta?.total_count || 0} borrowing{meta?.total_count !== 1 ? 's' : ''}
         </p>
@@ -108,7 +136,12 @@ export function BorrowingList() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {borrowings.map((borrowing) => (
-              <BorrowingCard key={borrowing.id} borrowing={borrowing} />
+              <BorrowingCard
+                key={borrowing.id}
+                borrowing={borrowing}
+                onReturn={isLibrarian ? () => handleReturn(borrowing.id) : undefined}
+                isReturning={returningBorrowingId === borrowing.id}
+              />
             ))}
           </div>
 
@@ -120,6 +153,14 @@ export function BorrowingList() {
             />
           )}
         </>
+      )}
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   )
