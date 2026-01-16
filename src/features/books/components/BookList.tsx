@@ -2,12 +2,26 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getBooks, createBook, updateBook, deleteBook } from '@/api/books'
+import { borrowBook } from '@/api/borrowings'
 import { useAuthStore } from '@/store/authStore'
 import { BookCard } from './BookCard'
 import { BookFilters } from './BookFilters'
 import { BookForm } from './BookForm'
 import { Modal, Pagination, Toast } from '@/components/ui'
 import type { Book, BookFilters as BookFiltersType, UpdateBookInput } from '@/types'
+import { AxiosError } from 'axios'
+
+interface ApiErrorResponse {
+  errors?: { detail?: string }[]
+}
+
+function getErrorMessage(error: unknown): string | null {
+  if (error instanceof AxiosError && error.response?.data) {
+    const data = error.response.data as ApiErrorResponse
+    return data.errors?.[0]?.detail || null
+  }
+  return null
+}
 
 export function BookList() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -15,6 +29,7 @@ export function BookList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [deletingBook, setDeletingBook] = useState<Book | null>(null)
+  const [borrowingBookId, setBorrowingBookId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   // Derive modal open state from URL or local state
@@ -81,6 +96,25 @@ export function BookList() {
       setToast({ message: 'Failed to delete book', type: 'error' })
     },
   })
+
+  const borrowMutation = useMutation({
+    mutationFn: borrowBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] })
+      setBorrowingBookId(null)
+      setToast({ message: 'Book borrowed successfully', type: 'success' })
+    },
+    onError: (error) => {
+      setBorrowingBookId(null)
+      const message = getErrorMessage(error) || 'Failed to borrow book'
+      setToast({ message, type: 'error' })
+    },
+  })
+
+  const handleBorrow = (bookId: string) => {
+    setBorrowingBookId(bookId)
+    borrowMutation.mutate(bookId)
+  }
 
   const handleFilterChange = (newFilters: BookFiltersType) => {
     const params = new URLSearchParams()
@@ -167,6 +201,8 @@ export function BookList() {
               <BookCard
                 key={book.id}
                 book={book}
+                onBorrow={() => handleBorrow(book.id)}
+                isBorrowing={borrowingBookId === book.id}
                 onEdit={isLibrarian ? () => setEditingBook(book) : undefined}
                 onDelete={isLibrarian ? () => setDeletingBook(book) : undefined}
               />

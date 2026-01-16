@@ -3,15 +3,19 @@ import { useAuthStore } from '@/store/authStore'
 
 interface BookCardProps {
   book: Book
+  onBorrow?: () => void
   onEdit?: () => void
   onDelete?: () => void
+  isBorrowing?: boolean
 }
 
-export function BookCard({ book, onEdit, onDelete }: BookCardProps) {
+export function BookCard({ book, onBorrow, onEdit, onDelete, isBorrowing }: BookCardProps) {
   const user = useAuthStore((state) => state.user)
   const isAvailable = book.available_copies > 0
   const isMember = user?.role === 'member'
   const showActions = onEdit || onDelete
+  const alreadyBorrowed = book.borrowed_by_current_user
+  const canBorrow = isMember && isAvailable && onBorrow && !alreadyBorrowed
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -52,11 +56,12 @@ export function BookCard({ book, onEdit, onDelete }: BookCardProps) {
         <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
           {isMember && (
             <button
-              disabled={!isAvailable}
-              aria-label={isAvailable ? `Borrow ${book.title}` : `${book.title} is not available`}
+              onClick={onBorrow}
+              disabled={!canBorrow || isBorrowing}
+              aria-label={alreadyBorrowed ? `You already borrowed ${book.title}` : isAvailable ? `Borrow ${book.title}` : `${book.title} is not available`}
               className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {isAvailable ? 'Borrow Book' : 'Not Available'}
+              {isBorrowing ? 'Borrowing...' : alreadyBorrowed ? 'Already Borrowed' : isAvailable ? 'Borrow Book' : 'Not Available'}
             </button>
           )}
           {showActions && (
