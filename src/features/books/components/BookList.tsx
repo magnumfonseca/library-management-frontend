@@ -7,7 +7,7 @@ import { BookCard } from './BookCard'
 import { BookFilters } from './BookFilters'
 import { BookForm } from './BookForm'
 import { Modal, Pagination, Toast } from '@/components/ui'
-import type { Book, BookFilters as BookFiltersType, CreateBookInput } from '@/types'
+import type { Book, BookFilters as BookFiltersType, UpdateBookInput } from '@/types'
 
 export function BookList() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -56,7 +56,7 @@ export function BookList() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateBookInput }) => updateBook(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateBookInput }) => updateBook(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['books'] })
       setEditingBook(null)

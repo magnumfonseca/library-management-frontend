@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface ToastProps {
   message: string
@@ -8,10 +8,13 @@ interface ToastProps {
 }
 
 export function Toast({ message, type = 'success', onClose, duration = 3000 }: ToastProps) {
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
-    const timer = setTimeout(onClose, duration)
+    const timer = setTimeout(() => onCloseRef.current(), duration)
     return () => clearTimeout(timer)
-  }, [onClose, duration])
+  }, [duration])
 
   const styles = {
     success: 'bg-green-600',

@@ -9,6 +9,8 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -25,10 +27,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     const dialog = dialogRef.current
     if (!dialog) return
 
-    const handleClose = () => onClose()
+    const handleClose = () => onCloseRef.current()
     dialog.addEventListener('close', handleClose)
     return () => dialog.removeEventListener('close', handleClose)
-  }, [onClose])
+  }, [])
 
   if (!isOpen) return null
 
