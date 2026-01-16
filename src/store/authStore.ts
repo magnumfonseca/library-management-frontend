@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { User } from '@/types'
+import { TOKEN_KEY } from '@/api/client'
 
 interface AuthState {
   user: User | null
@@ -13,7 +14,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   logout: () => {
-    localStorage.removeItem('authToken')
+    localStorage.removeItem(TOKEN_KEY)
     set({ user: null, isAuthenticated: false })
   },
 }))
