@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getBorrowings } from '@/api/borrowings'
@@ -8,12 +7,9 @@ import type { BorrowingFilters } from '@/types'
 
 export function BorrowingList() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [activeFilter, setActiveFilter] = useState<BorrowingFilters['status']>(
-    (searchParams.get('status') as BorrowingFilters['status']) || undefined
-  )
 
   const filters: BorrowingFilters = {
-    status: activeFilter,
+    status: (searchParams.get('status') as BorrowingFilters['status']) || undefined,
     page: Number(searchParams.get('page')) || 1,
     per_page: 12,
   }
@@ -24,7 +20,6 @@ export function BorrowingList() {
   })
 
   const handleFilterChange = (status: BorrowingFilters['status']) => {
-    setActiveFilter(status)
     const params = new URLSearchParams()
     if (status) params.set('status', status)
     setSearchParams(params)
@@ -75,22 +70,22 @@ export function BorrowingList() {
       <div className="flex gap-2">
         <FilterButton
           label="All"
-          isActive={!activeFilter}
+          isActive={!filters.status}
           onClick={() => handleFilterChange(undefined)}
         />
         <FilterButton
           label="Active"
-          isActive={activeFilter === 'active'}
+          isActive={filters.status === 'active'}
           onClick={() => handleFilterChange('active')}
         />
         <FilterButton
           label="Returned"
-          isActive={activeFilter === 'returned'}
+          isActive={filters.status === 'returned'}
           onClick={() => handleFilterChange('returned')}
         />
         <FilterButton
           label="Overdue"
-          isActive={activeFilter === 'overdue'}
+          isActive={filters.status === 'overdue'}
           onClick={() => handleFilterChange('overdue')}
         />
       </div>
