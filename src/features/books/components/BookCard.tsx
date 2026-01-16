@@ -1,11 +1,14 @@
 import type { Book } from '@/types'
+import { useAuthStore } from '@/store/authStore'
 
 interface BookCardProps {
   book: Book
 }
 
 export function BookCard({ book }: BookCardProps) {
+  const user = useAuthStore((state) => state.user)
   const isAvailable = book.available_copies > 0
+  const isMember = user?.role === 'member'
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -42,14 +45,16 @@ export function BookCard({ book }: BookCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-100">
-        <button
-          disabled={!isAvailable}
-          className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-        >
-          {isAvailable ? 'Borrow Book' : 'Not Available'}
-        </button>
-      </div>
+      {isMember && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <button
+            disabled={!isAvailable}
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            {isAvailable ? 'Borrow Book' : 'Not Available'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
