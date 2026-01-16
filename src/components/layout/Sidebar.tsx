@@ -4,7 +4,10 @@ import { useAuthStore } from '@/store/authStore'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Books', href: '/books', icon: BookIcon },
-  { name: 'Borrowings', href: '/borrowings', icon: ClipboardIcon },
+]
+
+const memberNavigation = [
+  { name: 'My Borrowings', href: '/borrowings', icon: ClipboardIcon },
 ]
 
 const librarianNavigation = [
@@ -66,6 +69,24 @@ export function Sidebar() {
             {item.name}
           </NavLink>
         ))}
+
+        {!isLibrarian &&
+          memberNavigation.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.href}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`
+              }
+            >
+              <item.icon className="w-5 h-5" />
+              {item.name}
+            </NavLink>
+          ))}
 
         {isLibrarian && (
           <>
