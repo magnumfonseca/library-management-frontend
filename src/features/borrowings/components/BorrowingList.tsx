@@ -99,8 +99,8 @@ export function BorrowingList() {
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-1">No borrowings found</h3>
           <p className="text-gray-500">
-            {activeFilter
-              ? `You don't have any ${activeFilter} borrowings.`
+            {filters.status
+              ? `You don't have any ${filters.status} borrowings.`
               : "You haven't borrowed any books yet."}
           </p>
         </div>
