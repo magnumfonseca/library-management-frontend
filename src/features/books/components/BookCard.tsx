@@ -49,6 +49,7 @@ export function BookCard({ book }: BookCardProps) {
         <div className="mt-4 pt-4 border-t border-gray-100">
           <button
             disabled={!isAvailable}
+            aria-label={isAvailable ? `Borrow ${book.title}` : `${book.title} is not available`}
             className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isAvailable ? 'Borrow Book' : 'Not Available'}
