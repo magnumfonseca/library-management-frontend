@@ -14,13 +14,9 @@ interface BooksResponse {
 }
 
 export async function getBooks(filters: BookFilters = {}): Promise<BooksResponse> {
-  const params = new URLSearchParams()
-
-  if (filters.title) params.append('title', filters.title)
-  if (filters.author) params.append('author', filters.author)
-  if (filters.genre) params.append('genre', filters.genre)
-  if (filters.page) params.append('page', String(filters.page))
-  if (filters.per_page) params.append('per_page', String(filters.per_page))
+  const params = Object.fromEntries(
+    Object.entries(filters).filter(([, value]) => value != null)
+  )
 
   const response = await api.get<BooksApiResponse>('/api/v1/books', { params })
 
