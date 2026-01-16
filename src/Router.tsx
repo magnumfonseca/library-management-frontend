@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginForm, SignupForm } from '@/features/auth'
 import { Dashboard } from '@/features/dashboard'
+import { BookList } from '@/features/books'
 import { ProtectedRoute } from '@/components/common/ProtectedRoute'
 import { AuthProvider } from '@/components/common/AuthProvider'
 import { MainLayout } from '@/components/layout'
@@ -18,7 +19,7 @@ export function Router() {
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/books" element={<PlaceholderPage title="Books" />} />
+              <Route path="/books" element={<BookList />} />
               <Route path="/borrowings" element={<PlaceholderPage title="My Borrowings" />} />
               <Route path="/invitations" element={<PlaceholderPage title="Invitations" />} />
             </Route>
