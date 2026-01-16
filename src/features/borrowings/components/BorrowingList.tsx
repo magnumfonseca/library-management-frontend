@@ -56,6 +56,7 @@ export function BorrowingList() {
   })
 
   const handleReturn = (borrowingId: string) => {
+    if (returnMutation.isPending) return
     setReturningBorrowingId(borrowingId)
     returnMutation.mutate(borrowingId)
   }
