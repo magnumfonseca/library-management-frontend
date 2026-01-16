@@ -17,6 +17,15 @@ export interface PaginationMeta {
   per_page: number
 }
 
+export interface ApiPaginationMeta {
+  page: {
+    total: number
+    totalPages: number
+    number: number
+    size: number
+  }
+}
+
 export interface PaginationLinks {
   self: string
   first: string
